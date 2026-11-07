@@ -11,3 +11,5 @@ This project downloads or vendors the following. Check each project's own licens
 | [CheerpJ](https://cheerpj.com) (loaded from Leaning Technologies' CDN; not bundled) | Java | Proprietary. Community license: personal / non-commercial; self-hosting needs a commercial license |
 | [Pyodide](https://pyodide.org) | Python | MPL-2.0 |
 | Monaco Editor, Yjs, y-webrtc, y-monaco | Editor + sync | MIT |
+| [uqr](https://github.com/unjs/uqr) | QR code | MIT |
+| Theme palettes (GitHub, Dracula, Monokai, One Dark, Solarized) | Editor themes | Color schemes recreated from the published palettes; not copied from VS Code theme extensions |

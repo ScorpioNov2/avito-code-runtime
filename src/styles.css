@@ -1,30 +1,21 @@
 :root {
+  /* --bg và --text được đặt theo theme đang chọn (xem app/chromeTheme.ts); các màu còn lại suy ra từ hai màu này. */
   --bg: #ffffff;
-  --surface-muted: #f3f4f6;
-  --border: #e5e7eb;
   --text: #1f2937;
-  --text-muted: #6b7280;
+  --surface-muted: color-mix(in srgb, var(--text) 7%, var(--bg));
+  --border: color-mix(in srgb, var(--text) 15%, var(--bg));
+  --text-muted: color-mix(in srgb, var(--text) 58%, var(--bg));
+  --terminal-bg: color-mix(in srgb, var(--text) 3%, var(--bg));
+  --terminal-text: var(--text);
   --primary: #1a6bf0;
   --primary-hover: #1558c9;
   --run: #16a34a;
   --danger: #dc2626;
-  --terminal-bg: #fafafa;
-  --terminal-text: #1f2937;
   --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-code: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
 }
 
-/* Khi chọn theme tối của editor, phần khung ngoài đổi theo cho đồng bộ */
-body.is-dark {
-  color-scheme: dark;
-  --bg: #1e1e1e;
-  --surface-muted: #2d2d30;
-  --border: #3c3c3c;
-  --text: #e5e7eb;
-  --text-muted: #9ca3af;
-  --terminal-bg: #1b1b1b;
-  --terminal-text: #d4d4d4;
-}
+[hidden] { display: none !important; }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -42,12 +33,17 @@ body.is-resizing .editor-host { pointer-events: none; }
 .brand__name { font-size: 30px; font-weight: 800; }
 .brand__suffix { color: var(--primary); font-size: 22px; font-weight: 600; }
 
+/* ---------- Phòng: tên + nút copy link + nút QR ---------- */
+.room-info { display: flex; align-items: center; gap: 8px; }
+.room-name { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; font-weight: 600; white-space: nowrap; }
+.room-name::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--run); }
+
 /* ---------- Buttons ---------- */
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border: 0; border-radius: 8px; font: inherit; font-weight: 500; color: var(--text); background: transparent; cursor: pointer; transition: background-color 0.15s; }
 .button:focus-visible, select:focus-visible, input:focus-visible, .terminal-pane__action:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .button--primary { background: var(--primary); color: #fff; }
 .button--primary:hover { background: var(--primary-hover); }
-.button--primary.is-in-room .button__plus { display: none; }
+.button--icon { width: 36px; padding: 0; }
 .button--secondary { background: var(--surface-muted); }
 .button--secondary:hover { background: var(--border); }
 .button--ghost:hover, .button--ghost.is-active { background: var(--surface-muted); }
@@ -88,10 +84,21 @@ body.is-resizing .editor-host { pointer-events: none; }
 .terminal-line--stderr { color: var(--danger); }
 .terminal-line--info { color: var(--text-muted); }
 
+/* ---------- Select: bỏ mũi tên mặc định (dính sát viền), tự vẽ mũi tên cách mép phải 12px ---------- */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+.status-bar select { min-width: 140px; }
+
 /* ---------- Status bar ---------- */
 .status-bar { display: flex; align-items: center; flex: none; gap: 12px; height: 52px; padding: 0 24px; border-top: 1px solid var(--border); }
-.status-bar select, .font-size-control { height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
-.status-bar select { min-width: 130px; padding: 0 10px; }
+.status-bar select, .font-size-control { height: 34px; border: 1px solid var(--border); border-radius: 8px; background-color: var(--bg); color: var(--text); font: inherit; }
 .font-size-control { display: inline-flex; overflow: hidden; }
 .font-size-control input { width: 52px; border: 0; background: transparent; color: inherit; font: inherit; text-align: center; appearance: textfield; -moz-appearance: textfield; }
 .font-size-control input::-webkit-inner-spin-button { appearance: none; }
@@ -109,8 +116,16 @@ body.is-resizing .editor-host { pointer-events: none; }
 .dialog::backdrop { background: rgb(15 23 42 / 0.45); }
 .dialog h2 { margin: 0; font-size: 20px; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; font-weight: 500; }
-.field input, .field select { height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; font-weight: 400; }
+.field input, .field select { height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 8px; background-color: var(--bg); color: var(--text); font: inherit; font-weight: 400; }
 .dialog__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+/* ---------- Popup QR ---------- */
+.dialog--flush { padding: 0; }
+.dialog__content { padding: 24px; }
+.dialog__hint { margin: 6px 0 0; color: var(--text-muted); }
+.qr-code { width: 232px; margin: 20px auto 0; padding: 8px; border-radius: 12px; background: #ffffff; box-shadow: 0 0 0 1px var(--border); }
+.qr-code svg { display: block; width: 100%; height: auto; }
+.qr-link { margin: 14px 0 0; color: var(--text-muted); font-size: 12px; text-align: center; word-break: break-all; user-select: all; }
 
 /* ---------- Toast ---------- */
 .toast-container { position: fixed; top: 72px; right: 20px; z-index: 50; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 40px)); }
@@ -132,3 +147,6 @@ body.is-resizing .editor-host { pointer-events: none; }
   .brand__name { font-size: 24px; }
   .top-bar__divider, #toggle-terminal-button { display: none; }
 }
+
+/* Chừa chỗ cho mũi tên của select (đặt cuối file để thắng `padding` của .field). */
+.status-bar select, .field select { padding-right: 40px; }

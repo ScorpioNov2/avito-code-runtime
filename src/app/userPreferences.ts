@@ -1,15 +1,9 @@
-export const EDITOR_THEMES = [
-  { id: 'vs', label: 'Light (vs)' },
-  { id: 'vs-dark', label: 'Dark (vs-dark)' },
-  { id: 'hc-black', label: 'High contrast dark (hc-black)' },
-  { id: 'hc-light', label: 'High contrast light (hc-light)' },
-] as const;
-
-export type EditorThemeName = (typeof EDITOR_THEMES)[number]['id'];
+import { DEFAULT_EDITOR_THEME_ID, hasEditorTheme } from './editorThemes/editorThemeRegistry';
 
 export interface UserPreferences {
   displayName: string;
-  editorTheme: EditorThemeName;
+  /** Id của theme (xem editorThemes/). */
+  editorTheme: string;
   fontSize: number;
 }
 
@@ -18,20 +12,16 @@ export const MAX_FONT_SIZE = 40;
 const MAX_NAME_LENGTH = 24;
 const STORAGE_KEY = 'avito-code:preferences';
 
-export function isDarkTheme(theme: EditorThemeName): boolean {
-  return theme === 'vs-dark' || theme === 'hc-black';
-}
-
-function isEditorThemeName(value: unknown): value is EditorThemeName {
-  return EDITOR_THEMES.some((theme) => theme.id === value);
-}
-
 function createDefaultPreferences(): UserPreferences {
   return {
     displayName: `Guest-${Math.floor(1000 + Math.random() * 9000)}`,
-    editorTheme: 'vs', // mặc định: theme sáng giống VS Code
+    editorTheme: DEFAULT_EDITOR_THEME_ID, // mặc định: theme sáng giống VS Code
     fontSize: 14,
   };
+}
+
+function clampFontSize(value: number, fallback: number): number {
+  return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(Number(value)) || fallback));
 }
 
 function loadPreferences(): UserPreferences {
@@ -40,8 +30,8 @@ function loadPreferences(): UserPreferences {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<UserPreferences>;
     return {
       displayName: typeof saved.displayName === 'string' && saved.displayName.trim() ? saved.displayName.slice(0, MAX_NAME_LENGTH) : defaults.displayName,
-      editorTheme: isEditorThemeName(saved.editorTheme) ? saved.editorTheme : defaults.editorTheme,
-      fontSize: Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Number(saved.fontSize) || defaults.fontSize)),
+      editorTheme: hasEditorTheme(saved.editorTheme) ? saved.editorTheme : defaults.editorTheme,
+      fontSize: clampFontSize(saved.fontSize ?? defaults.fontSize, defaults.fontSize),
     };
   } catch {
     return defaults;
@@ -64,8 +54,8 @@ export class PreferenceStore {
   update(changes: Partial<UserPreferences>): void {
     const next = { ...this.current, ...changes };
     next.displayName = next.displayName.trim().slice(0, MAX_NAME_LENGTH) || this.current.displayName;
-    next.fontSize = Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Math.round(Number(next.fontSize)) || this.current.fontSize));
-    if (!isEditorThemeName(next.editorTheme)) next.editorTheme = this.current.editorTheme;
+    next.fontSize = clampFontSize(next.fontSize, this.current.fontSize);
+    if (!hasEditorTheme(next.editorTheme)) next.editorTheme = this.current.editorTheme;
 
     this.current = next;
     this.persist();
