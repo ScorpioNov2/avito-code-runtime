@@ -3,6 +3,9 @@ import './app/monacoEnvironment';
 import { CollaborationSession } from './app/collaborationSession';
 import { queryDomElements } from './app/domElements';
 import { EditorController } from './app/editorController';
+import { applyChromeTheme } from './app/chromeTheme';
+import { getAllEditorThemes, getEditorTheme } from './app/editorThemes/editorThemeRegistry';
+import { QrDialog } from './app/qrDialog';
 import { keepRemoteCursorStylesInSync } from './app/remoteCursorStyles';
 import { RunController } from './app/runController';
 import { SettingsDialog } from './app/settingsDialog';
@@ -10,7 +13,7 @@ import { SplitPane } from './app/splitPane';
 import { StatusBar } from './app/statusBar';
 import { TerminalPanel } from './app/terminalPanel';
 import { ToastNotifier } from './app/toastNotifier';
-import { PreferenceStore, isDarkTheme } from './app/userPreferences';
+import { PreferenceStore } from './app/userPreferences';
 import { DEFAULT_LANGUAGE_ID, getAllLanguages, getLanguage, hasLanguage } from './languages/languageRegistry';
 import { registerAllLanguagePlugins } from './languages/registerAllLanguagePlugins';
 
@@ -43,6 +46,7 @@ function seedNewDocument(): void {
 }
 
 // ---- Editor + đồng bộ ----
+EditorController.registerThemes(getAllEditorThemes());
 const editor = new EditorController(dom.editorHost, {
   languageId: getSharedLanguageId(),
   theme: preferences.value.editorTheme,
@@ -76,11 +80,12 @@ applySharedLanguage();
 
 function applyPreferences(): void {
   const { editorTheme, fontSize, displayName } = preferences.value;
-  editor.setTheme(editorTheme);
+  const theme = getEditorTheme(editorTheme);
+  editor.setTheme(theme.id);
+  applyChromeTheme(theme);
   editor.setFontSize(fontSize);
   statusBar.setFontSize(fontSize);
   session.setLocalName(displayName);
-  document.body.classList.toggle('is-dark', isDarkTheme(editorTheme));
 }
 preferences.subscribe(applyPreferences);
 applyPreferences();
@@ -97,15 +102,19 @@ const runController = new RunController({
   runButton: dom.runButton,
 });
 
-function refreshRoomButton(): void {
+function refreshRoomUi(): void {
   const roomId = session.currentRoomId;
-  dom.createRoomLabel.textContent = roomId ? `Room ${roomId.slice(0, 6)} · copy link` : 'Create room';
-  dom.createRoomButton.classList.toggle('is-in-room', roomId !== null);
+  dom.createRoomButton.hidden = roomId !== null;
+  dom.roomInfo.hidden = roomId === null;
+  if (roomId) {
+    dom.roomName.textContent = `Room ${roomId.slice(0, 6)}`;
+    dom.roomName.title = `Room ID: ${roomId}`;
+  }
 }
 
-async function handleCreateRoomClick(): Promise<void> {
-  const roomId = session.currentRoomId ?? session.createRoom();
-  refreshRoomButton();
+async function copyRoomLink(): Promise<void> {
+  const roomId = session.currentRoomId;
+  if (!roomId) return;
   const roomLink = CollaborationSession.buildRoomLink(roomId);
   try {
     await navigator.clipboard.writeText(roomLink);
@@ -115,7 +124,18 @@ async function handleCreateRoomClick(): Promise<void> {
   }
 }
 
-dom.createRoomButton.addEventListener('click', () => void handleCreateRoomClick());
+const qrDialog = new QrDialog(dom.qrDialog, () => void copyRoomLink());
+
+dom.createRoomButton.addEventListener('click', () => {
+  session.createRoom();
+  refreshRoomUi();
+  void copyRoomLink();
+});
+dom.copyLinkButton.addEventListener('click', () => void copyRoomLink());
+dom.showQrButton.addEventListener('click', () => {
+  const roomId = session.currentRoomId;
+  if (roomId) qrDialog.open(CollaborationSession.buildRoomLink(roomId));
+});
 dom.toggleTerminalButton.addEventListener('click', () => terminal.toggle());
 dom.closeTerminalButton.addEventListener('click', () => terminal.setVisible(false));
 dom.clearTerminalButton.addEventListener('click', () => terminal.clear());
@@ -124,4 +144,4 @@ dom.settingsButton.addEventListener('click', () => settingsDialog.open());
 editor.addRunShortcut(() => void runController.toggleRun());
 window.addEventListener('hashchange', () => window.location.reload());
 
-refreshRoomButton();
+refreshRoomUi();

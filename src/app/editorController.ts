@@ -3,6 +3,7 @@ import { MonacoBinding } from 'y-monaco';
 import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import { throttleWithAnimationFrame } from '../utils/frameThrottle';
+import type { EditorThemeDefinition } from './editorThemes/editorTheme';
 
 export interface EditorOptions {
   languageId: string;
@@ -14,6 +15,13 @@ export interface EditorOptions {
 export class EditorController {
   private readonly editor: monaco.editor.IStandaloneCodeEditor;
   private readonly requestLayout = throttleWithAnimationFrame(() => this.layoutNow());
+
+  /** Đăng ký các theme tuỳ chỉnh với Monaco. Gọi một lần trước khi tạo editor. */
+  static registerThemes(themes: EditorThemeDefinition[]): void {
+    for (const theme of themes) {
+      if (theme.monacoTheme) monaco.editor.defineTheme(theme.id, theme.monacoTheme);
+    }
+  }
 
   constructor(host: HTMLElement, options: EditorOptions) {
     this.editor = monaco.editor.create(host, {

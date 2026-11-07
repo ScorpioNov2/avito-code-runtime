@@ -1,5 +1,6 @@
 import { requireElement } from './domElements';
-import { EDITOR_THEMES, type EditorThemeName, type PreferenceStore } from './userPreferences';
+import { getAllEditorThemes } from './editorThemes/editorThemeRegistry';
+import type { PreferenceStore } from './userPreferences';
 
 /** Popup Settings: nhập tên hiển thị + chọn theme của Monaco. */
 export class SettingsDialog {
@@ -12,13 +13,13 @@ export class SettingsDialog {
     private readonly dialog: HTMLDialogElement,
     private readonly preferences: PreferenceStore,
   ) {
-    this.themeSelect.replaceChildren(...EDITOR_THEMES.map((theme) => new Option(theme.label, theme.id)));
+    this.themeSelect.replaceChildren(...getAllEditorThemes().map((theme) => new Option(theme.label, theme.id)));
     this.cancelButton.addEventListener('click', () => this.dialog.close());
     // form method="dialog" tự đóng popup sau khi submit.
     this.form.addEventListener('submit', () => {
       this.preferences.update({
         displayName: this.nameInput.value,
-        editorTheme: this.themeSelect.value as EditorThemeName,
+        editorTheme: this.themeSelect.value,
       });
     });
   }

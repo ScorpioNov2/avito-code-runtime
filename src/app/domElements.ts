@@ -8,7 +8,10 @@ export function requireElement<T extends HTMLElement>(id: string): T {
 export function queryDomElements() {
   return {
     createRoomButton: requireElement<HTMLButtonElement>('create-room-button'),
-    createRoomLabel: requireElement<HTMLElement>('create-room-label'),
+    roomInfo: requireElement<HTMLElement>('room-info'),
+    roomName: requireElement<HTMLElement>('room-name'),
+    copyLinkButton: requireElement<HTMLButtonElement>('copy-link-button'),
+    showQrButton: requireElement<HTMLButtonElement>('show-qr-button'),
     toggleTerminalButton: requireElement<HTMLButtonElement>('toggle-terminal-button'),
     runButton: requireElement<HTMLButtonElement>('run-button'),
     settingsButton: requireElement<HTMLButtonElement>('settings-button'),
@@ -24,6 +27,7 @@ export function queryDomElements() {
     increaseFontButton: requireElement<HTMLButtonElement>('increase-font-button'),
     memberList: requireElement<HTMLElement>('member-list'),
     settingsDialog: requireElement<HTMLDialogElement>('settings-dialog'),
+    qrDialog: requireElement<HTMLDialogElement>('qr-dialog'),
     toastContainer: requireElement<HTMLElement>('toast-container'),
   };
 }
