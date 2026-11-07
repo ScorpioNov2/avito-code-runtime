@@ -8,7 +8,7 @@ This project downloads or vendors the following. Check each project's own licens
 | [LyonSyonII/rubri](https://github.com/LyonSyonII/rubri) (Miri `.wasm`, std `.rlib`s, and the `wasi/` folder vendored in `src/languages/toolchains/rust/wasi/`) | Rust | MIT |
 | [bjorn3/browser_wasi_shim](https://github.com/bjorn3/browser_wasi_shim) (basis of the vendored `wasi/` code) | Rust | Apache-2.0 OR MIT |
 | Rust compiler / Miri / std libraries | Rust | MIT OR Apache-2.0 |
-| [CheerpJ](https://cheerpj.com) (loaded from Leaning Technologies' CDN; not bundled) | Java | Proprietary. Community license: personal / non-commercial; self-hosting needs a commercial license |
+| [live-codes/java](https://github.com/live-codes/java) (`@live-codes/java-wasm`: javac + TeaVM compiled to WebAssembly, built on [Vsprocessing/teavm-javac](https://github.com/Vsprocessing/teavm-javac) and [TeaVM](https://teavm.org)) | Java | Apache-2.0; the bundled javac comes from OpenJDK (GPLv2 with Classpath Exception), see the package's own `THIRD-PARTY-NOTICES.md` |
 | [Pyodide](https://pyodide.org) | Python | MPL-2.0 |
 | Monaco Editor, Yjs, y-webrtc, y-monaco | Editor + sync | MIT |
 | [uqr](https://github.com/unjs/uqr) | QR code | MIT |

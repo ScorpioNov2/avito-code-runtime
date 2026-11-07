@@ -255,6 +255,62 @@
       "sha256": "ec66356410ce304b664a0d6baad970e111231fb22337be9906af08944b338b2e",
       "size": 36798,
       "gzip": true
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/java-wasm.iife.js",
+      "dest": "java/java-wasm.iife.js",
+      "sha256": "0cf26b67734d559b25ead931e9a3937b140f7dacb9ccae8e85796971fdbfafc2",
+      "size": 2332,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/worker-java.js",
+      "dest": "java/worker-java.js",
+      "sha256": "b3c198b5f221da46b40725aeb835248428e7f2a8fc15d2d0eb71949a1fb92b14",
+      "size": 23798,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/teavm/compile-classlib-teavm.bin",
+      "dest": "java/teavm/compile-classlib-teavm.bin",
+      "sha256": "2148f03d1ff554c8114d434cb826d4c4abad9d898df82f9115daa6ac1be16dba",
+      "size": 221666,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/teavm/compiler.wasm",
+      "dest": "java/teavm/compiler.wasm",
+      "sha256": "bad2b9856e263d185d09bb377daa85f25a09598da8b2854111e3db5358dc3dc8",
+      "size": 5459727,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/teavm/compiler.wasm-deobfuscator.wasm",
+      "dest": "java/teavm/compiler.wasm-deobfuscator.wasm",
+      "sha256": "aaa8c0b6fec394dbbf8a5f900a66824e554c7157cc9e8a402f37a4a7df144c73",
+      "size": 40499,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/teavm/compiler.wasm-runtime.js",
+      "dest": "java/teavm/compiler.wasm-runtime.js",
+      "sha256": "4709a64b0b979090bb14999720576d614f13127932109ea3c9638154c04887cc",
+      "size": 16781,
+      "gzip": false
+    },
+    {
+      "group": "java",
+      "url": "https://raw.githubusercontent.com/live-codes/java/6a651fab510e712328ec164eb7af7de50e782e99/dist/teavm/runtime-classlib-teavm.bin",
+      "dest": "java/teavm/runtime-classlib-teavm.bin",
+      "sha256": "f677a5f6a2e9daa94a1438982737e7778777cf23ec93eca303e49aa9dee45a16",
+      "size": 2367751,
+      "gzip": false
     }
   ]
 }

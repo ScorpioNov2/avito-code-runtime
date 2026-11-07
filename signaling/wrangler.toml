@@ -1,0 +1,17 @@
+name = "avito-code-signaling"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[durable_objects.bindings]]
+name = "SIGNALING_HUB"
+class_name = "SignalingHub"
+
+# Gói miễn phí của Cloudflare chỉ hỗ trợ Durable Object dùng SQLite (new_sqlite_classes).
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SignalingHub"]
+
+[vars]
+# Danh sách origin được phép kết nối, ngăn cách bằng dấu phẩy (để trống = cho phép tất cả).
+# Ví dụ: "https://<tên-github>.github.io,http://localhost:5173"
+ALLOWED_ORIGINS = ""

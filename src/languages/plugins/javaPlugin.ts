@@ -1,11 +1,9 @@
-import type { LanguagePlugin, RunOutputChannel } from '../languagePlugin';
-import { loadCheerpJApi } from '../toolchains/java/cheerpjRuntime';
-import avitoDriverSource from '../toolchains/java/AvitoDriver.java?raw';
+import type { LanguagePlugin } from '../languagePlugin';
 import { JavaToolchain } from '../toolchains/java/javaToolchain';
+import { createBrowserJavaRuntime } from '../toolchains/java/teavmRuntime';
 
-// Java chạy bằng CheerpJ ngay trên luồng chính (không đặt trong Web Worker được), nên không thể dừng giữa chừng.
-const toolchain = new JavaToolchain(loadCheerpJApi, avitoDriverSource);
-let activeOutput: RunOutputChannel | null = null;
+// Java: javac + TeaVM biên dịch sang WebAssembly ngay trong trình duyệt (thư viện tự chạy trong Web Worker).
+const toolchain = new JavaToolchain(createBrowserJavaRuntime);
 
 const javaPlugin: LanguagePlugin = {
   id: 'java',
@@ -24,16 +22,9 @@ public class Main {
     { pattern: /^\s*import\s+javax?\./m, weight: 3 },
   ],
   async run(code, output) {
-    activeOutput = output;
-    try {
-      await toolchain.run(code, output);
-    } finally {
-      activeOutput = null;
-    }
+    await toolchain.run(code, output);
   },
-  stop() {
-    activeOutput?.info('Java cannot be stopped once started. Reload the page to cancel.');
-  },
+  stop: () => toolchain.stop(),
 };
 
 export default javaPlugin;

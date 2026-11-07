@@ -1,7 +1,8 @@
-// Tải toolchain WebAssembly (clang/lld cho C/C++, Miri cho Rust) về public/wasm/ để tự host.
+// Tải toolchain WebAssembly (clang/lld cho C/C++, Miri cho Rust, javac+TeaVM cho Java) về public/wasm/ để tự host.
 // Dùng:  npm run fetch-wasm            (tải tất cả)
 //        npm run fetch-wasm -- clang   (chỉ C/C++)
 //        npm run fetch-wasm -- rust    (chỉ Rust)
+//        npm run fetch-wasm -- java    (chỉ Java)
 // File đã có và đúng checksum sẽ được bỏ qua. Phiên bản được ghim bằng commit SHA trong manifest.
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs';
@@ -18,7 +19,7 @@ const requestedGroup = process.argv[2];
 const selectedAssets = requestedGroup ? assets.filter((asset) => asset.group === requestedGroup) : assets;
 
 if (selectedAssets.length === 0) {
-  console.error(`Unknown group "${requestedGroup}". Use: clang | rust`);
+  console.error(`Unknown group "${requestedGroup}". Use: clang | rust | java`);
   process.exit(1);
 }
 
