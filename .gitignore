@@ -2,3 +2,5 @@ node_modules
 dist
 .env
 public/wasm
+signaling/node_modules
+signaling/.wrangler

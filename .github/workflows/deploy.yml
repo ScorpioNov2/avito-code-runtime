@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Lấy đường dẫn gốc của site (ví dụ /avito-code-runtime) để Vite build đúng `base`.
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - run: npm ci
+
+      # Toolchain WebAssembly (~225 MB) không nằm trong git: tải về lúc build, có kiểm tra SHA-256.
+      - name: Cache WebAssembly toolchains
+        uses: actions/cache@v4
+        with:
+          path: public/wasm
+          key: wasm-${{ hashFiles('scripts/wasm-assets.manifest.json') }}
+
+      - run: npm run fetch-wasm
+
+      - name: Build
+        run: npm run build -- --base=${{ steps.pages.outputs.base_path }}/
+        env:
+          # Đặt trong Settings > Secrets and variables > Actions > Variables
+          VITE_SIGNALING_URLS: ${{ vars.VITE_SIGNALING_URLS }}
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
