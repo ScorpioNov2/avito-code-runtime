@@ -270,7 +270,10 @@
       "dest": "java/worker-java.js",
       "sha256": "b3c198b5f221da46b40725aeb835248428e7f2a8fc15d2d0eb71949a1fb92b14",
       "size": 23798,
-      "gzip": false
+      "gzip": false,
+      "patch": "java-stream-output",
+      "patchedSha256": "31ebf011ca4c490760931c992c114605ad5fbde4e7fc96ad722192cdbbdcaf15",
+      "patchedSize": 24345
     },
     {
       "group": "java",

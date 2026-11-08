@@ -5,12 +5,16 @@
 //        npm run fetch-wasm -- java    (chỉ Java)
 // File đã có và đúng checksum sẽ được bỏ qua. Phiên bản được ghim bằng commit SHA trong manifest.
 import { createHash } from 'node:crypto';
-import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { createGunzip } from 'node:zlib';
+import { patchJavaWorker } from './patches/javaStreamOutput.mjs';
+
+// Patch áp dụng sau khi tải và kiểm tra checksum của bản gốc. Manifest ghi thêm checksum của bản đã patch.
+const patches = { 'java-stream-output': patchJavaWorker };
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const outputRoot = join(scriptDir, '..', 'public', 'wasm');
@@ -30,7 +34,9 @@ async function sha256Of(filePath) {
 }
 
 async function isAlreadyDownloaded(asset, destination) {
-  return existsSync(destination) && statSync(destination).size === asset.size && (await sha256Of(destination)) === asset.sha256;
+  const expectedSize = asset.patchedSize ?? asset.size;
+  const expectedHash = asset.patchedSha256 ?? asset.sha256;
+  return existsSync(destination) && statSync(destination).size === expectedSize && (await sha256Of(destination)) === expectedHash;
 }
 
 async function download(asset) {
@@ -52,6 +58,15 @@ async function download(asset) {
   if (actualHash !== asset.sha256) {
     rmSync(partialPath, { force: true });
     throw new Error(`Checksum mismatch for ${asset.dest}\n  expected ${asset.sha256}\n  actual   ${actualHash}`);
+  }
+  if (asset.patch) {
+    // Bản gốc đã đúng checksum: giờ mới áp patch rồi kiểm tra lại checksum của bản đã patch.
+    writeFileSync(partialPath, patches[asset.patch](readFileSync(partialPath, 'utf8')));
+    const patchedHash = await sha256Of(partialPath);
+    if (patchedHash !== asset.patchedSha256) {
+      rmSync(partialPath, { force: true });
+      throw new Error(`Patched file mismatch for ${asset.dest}\n  expected ${asset.patchedSha256}\n  actual   ${patchedHash}`);
+    }
   }
   renameSync(partialPath, destination);
   console.log(`  ok     ${asset.dest} (${(asset.size / 1e6).toFixed(1)} MB)`);

@@ -37,7 +37,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: public/wasm
-          key: wasm-${{ hashFiles('scripts/wasm-assets.manifest.json') }}
+          # Cả script và patch cũng nằm trong khoá cache: đổi chúng thì phải tải lại và áp patch lại.
+          key: wasm-${{ hashFiles('scripts/wasm-assets.manifest.json', 'scripts/fetch-wasm-assets.mjs', 'scripts/patches/*.mjs') }}
 
       - run: npm run fetch-wasm
 
