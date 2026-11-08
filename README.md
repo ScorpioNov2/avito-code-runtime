@@ -22,7 +22,7 @@ buttons. Rooms need a signaling server, see below. To test alone, open the room 
 
 | Language | How it runs | First run | Notes |
 |----------|-------------|-----------|-------|
-| JavaScript | Web Worker | instant | `console.*` -> terminal, top-level `await` works |
+| JavaScript | Web Worker | instant | `console.*` -> terminal, top-level `await` works. Like Node, the run ends only when no timer / `fetch` is pending (`setTimeout`, `setInterval`, async callbacks, `fetch(...).then(...)`); a never-cleared `setInterval` keeps running until you press Stop. Errors show your own line numbers |
 | Python | Pyodide in a Web Worker | ~5 s | `input()` not supported |
 | C/C++ | clang + wasm-ld (LLVM 8) compiled to wasm, in a Web Worker | downloads ~60 MB (cached) | C++17, libc++, no exceptions, no threads, no `sleep`/`usleep`, stdin is empty. Source is always compiled as C++ |
 | Rust | **Miri interpreter** compiled to wasm, in a Web Worker | downloads ~150 MB (cached) | Interprets code (does not compile to machine code), so it is slow. Single file, std only, no stdin. A panic prints an extra "unsupported Miri functionality" message (no unwinding) |
@@ -32,6 +32,9 @@ Why Rust is an interpreter: there is currently no prebuilt, working `rustc` for 
 executable (the available builds stop at object files). Miri sidesteps linking.
 
 Java's engine is a young project; it is pinned to one commit and checksummed, so it cannot change under you.
+The engine returns stdout only when the program ends, so `scripts/patches/javaStreamOutput.mjs` patches its worker
+(right after the checksum check, with an exact-match assertion) to send each line as soon as the program prints it:
+`System.out.println` followed by `Thread.sleep(10000)` shows the line immediately.
 A public class that is not named `Main` (for example `public class Solution`) is accepted: the `public` keyword is
 blanked out before compiling because the engine always compiles `Main.java`.
 
@@ -82,6 +85,9 @@ terminates TLS, such as a small VPS. Peers behind strict NAT/firewalls may addit
 
 Visual Studio Dark, Visual Studio (default), High Contrast Dark/Light, GitHub Dark/Light, Dracula, Monokai, One Dark,
 Solarized Dark/Light. A theme colors both the editor and the surrounding UI. Themes are per user, not synced.
+
+**Settings** also has a switch, "Show names on other people's cursors": turn it off when a name label covers the code
+you are reading (the colored cursor bar and selection stay). It is saved in your browser and affects only you.
 Add one: create `src/app/editorThemes/themes/<name>Theme.ts` with `export default createPaletteTheme(meta, palette)`
 (copy an existing file); it is picked up automatically.
 

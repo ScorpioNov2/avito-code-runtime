@@ -5,6 +5,8 @@ export interface UserPreferences {
   /** Id của theme (xem editorThemes/). */
   editorTheme: string;
   fontSize: number;
+  /** Hiện tên người khác trên con trỏ của họ. Tắt đi nếu nhãn tên che mất code đang đọc. */
+  showRemoteNames: boolean;
 }
 
 export const MIN_FONT_SIZE = 8;
@@ -17,6 +19,7 @@ function createDefaultPreferences(): UserPreferences {
     displayName: `Guest-${Math.floor(1000 + Math.random() * 9000)}`,
     editorTheme: DEFAULT_EDITOR_THEME_ID, // mặc định: theme sáng giống VS Code
     fontSize: 14,
+    showRemoteNames: true,
   };
 }
 
@@ -32,6 +35,7 @@ function loadPreferences(): UserPreferences {
       displayName: typeof saved.displayName === 'string' && saved.displayName.trim() ? saved.displayName.slice(0, MAX_NAME_LENGTH) : defaults.displayName,
       editorTheme: hasEditorTheme(saved.editorTheme) ? saved.editorTheme : defaults.editorTheme,
       fontSize: clampFontSize(saved.fontSize ?? defaults.fontSize, defaults.fontSize),
+      showRemoteNames: typeof saved.showRemoteNames === 'boolean' ? saved.showRemoteNames : defaults.showRemoteNames,
     };
   } catch {
     return defaults;

@@ -13,3 +13,5 @@ This project downloads or vendors the following. Check each project's own licens
 | Monaco Editor, Yjs, y-webrtc, y-monaco | Editor + sync | MIT |
 | [uqr](https://github.com/unjs/uqr) | QR code | MIT |
 | Theme palettes (GitHub, Dracula, Monokai, One Dark, Solarized) | Editor themes | Color schemes recreated from the published palettes; not copied from VS Code theme extensions |
+
+Modification notice (Apache-2.0): `worker-java.js` from live-codes/java is modified at download time by `scripts/patches/javaStreamOutput.mjs` so that stdout/stderr are streamed line by line.

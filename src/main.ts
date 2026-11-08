@@ -79,13 +79,14 @@ session.sharedSettings.observe(applySharedLanguage);
 applySharedLanguage();
 
 function applyPreferences(): void {
-  const { editorTheme, fontSize, displayName } = preferences.value;
+  const { editorTheme, fontSize, displayName, showRemoteNames } = preferences.value;
   const theme = getEditorTheme(editorTheme);
   editor.setTheme(theme.id);
   applyChromeTheme(theme);
   editor.setFontSize(fontSize);
   statusBar.setFontSize(fontSize);
   session.setLocalName(displayName);
+  document.body.classList.toggle('hide-remote-names', !showRemoteNames);
 }
 preferences.subscribe(applyPreferences);
 applyPreferences();

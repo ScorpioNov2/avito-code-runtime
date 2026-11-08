@@ -1,6 +1,11 @@
 import type { RunOutputChannel } from '../../languagePlugin';
 import { prepareJavaSource } from './prepareJavaSource';
 
+export interface JavaProgressEvent {
+  stage: string;
+  detail: string;
+}
+
 /** Phần của @live-codes/java-wasm (javac + TeaVM chạy bằng WebAssembly) mà ta dùng. */
 export interface JavaRunResult {
   ok: boolean;
@@ -17,13 +22,45 @@ export interface JavaRunResult {
 
 export interface JavaRuntime {
   run(source: string, options?: { input?: string; mainClass?: string }): Promise<JavaRunResult>;
+  /** Nhận sự kiện tiến trình. Bản worker đã patch (scripts/patches/javaStreamOutput.mjs) gửi từng dòng stdout/stderr qua đây. */
+  on(event: 'progress', listener: (event: JavaProgressEvent) => void): () => void;
   destroy(): void;
 }
 
 export type JavaRuntimeFactory = () => Promise<JavaRuntime>;
 
-function toLines(text: string): string[] {
-  return text === '' ? [] : text.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n');
+/**
+ * Output của chương trình Java đến theo hai đường: từng dòng ngay khi chương trình in (stream), và toàn bộ văn bản
+ * khi chương trình kết thúc. Lớp này in dòng stream ngay, rồi khi xong chỉ in PHẦN CÒN THIẾU của kết quả cuối
+ * (ví dụ dòng cuối không có \n), nên không bao giờ in trùng.
+ */
+export class StreamedOutput {
+  private received = '';
+  private pendingLine = '';
+
+  constructor(private readonly emitLine: (line: string) => void) {}
+
+  push(chunk: string): void {
+    this.received += chunk;
+    this.pendingLine += chunk;
+    const lines = this.pendingLine.split('\n');
+    this.pendingLine = lines.pop() ?? '';
+    lines.forEach((line) => this.emitLine(line.replace(/\r$/, '')));
+  }
+
+  /** Gọi khi chạy xong, với toàn bộ văn bản mà engine trả về. */
+  finish(finalText: string): void {
+    const continuesStream = finalText.startsWith(this.received);
+    const remainder = continuesStream ? this.pendingLine + finalText.slice(this.received.length) : finalText;
+    this.pendingLine = '';
+    if (remainder !== '') remainder.replace(/\r\n/g, '\n').replace(/\n$/, '').split('\n').forEach((line) => this.emitLine(line));
+  }
+
+  /** Gọi khi bị dừng giữa chừng: in nốt phần dòng dang dở. */
+  flushPending(): void {
+    if (this.pendingLine !== '') this.emitLine(this.pendingLine);
+    this.pendingLine = '';
+  }
 }
 
 /** Biên dịch và chạy Java trong một Web Worker do thư viện tự quản lý. */
@@ -38,21 +75,36 @@ export class JavaToolchain {
     const runtime = await this.getRuntime(output);
     const { source: preparedSource, mainClass } = prepareJavaSource(source);
 
-    const outcome = await new Promise<JavaRunResult | 'stopped'>((resolve) => {
-      this.cancelCurrentRun = () => resolve('stopped');
-      runtime.run(preparedSource, { mainClass }).then(resolve, (error: unknown) =>
-        resolve({ ok: false, stdout: '', stderr: error instanceof Error ? error.message : String(error), exitCode: 1 }),
-      );
+    const streams = {
+      stdout: new StreamedOutput((line) => output.stdout(line)),
+      stderr: new StreamedOutput((line) => output.stderr(line)),
+    };
+    const stopListening = runtime.on('progress', ({ stage, detail }) => {
+      if (stage === 'stdout' || stage === 'stderr') streams[stage].push(detail);
     });
-    this.cancelCurrentRun = null;
+
+    let outcome: JavaRunResult | 'stopped';
+    try {
+      outcome = await new Promise<JavaRunResult | 'stopped'>((resolve) => {
+        this.cancelCurrentRun = () => resolve('stopped');
+        runtime.run(preparedSource, { mainClass }).then(resolve, (error: unknown) =>
+          resolve({ ok: false, stdout: '', stderr: error instanceof Error ? error.message : String(error), exitCode: 1 }),
+        );
+      });
+    } finally {
+      stopListening();
+      this.cancelCurrentRun = null;
+    }
 
     if (outcome === 'stopped') {
+      streams.stdout.flushPending();
+      streams.stderr.flushPending();
       output.info('Execution stopped.');
       return 1;
     }
 
-    toLines(outcome.stdout).forEach((line) => output.stdout(line));
-    toLines(outcome.stderr).forEach((line) => output.stderr(line));
+    streams.stdout.finish(outcome.stdout);
+    streams.stderr.finish(outcome.stderr);
 
     const didNotCompile = !outcome.ok && outcome.runMs === undefined;
     if (didNotCompile) {
