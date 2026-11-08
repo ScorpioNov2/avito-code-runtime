@@ -81,6 +81,16 @@ runs it locally on `ws://127.0.0.1:8787`.
 Alternative without Cloudflare: `PORT=4444 npx y-webrtc-signaling` (installed with `y-webrtc`) on any Node host that
 terminates TLS, such as a small VPS. Peers behind strict NAT/firewalls may additionally need a TURN server.
 
+## Keeping everyone's text identical
+
+Yjs counts positions with `\n` (LF), but Monaco's default line ending on **Windows is CRLF**, and y-monaco only resets the
+editor text when it differs, so someone who joins an (initially empty) room kept CRLF. Each line then shifted positions by
+one character: other people's typing landed in the wrong place and cursors were drawn in the wrong place.
+`src/app/sharedTextBinding.ts` forces LF on every editor (without writing anything to the shared document) and
+re-checks the editor against the shared document whenever it has been idle for 0.4 s; if they ever differ it resyncs the
+editor from the shared document and logs `[avito-code] The editor diverged from the shared document; resyncing it.` in the
+browser console. It also removes any stray `\r` that a client still running an older version writes into the document.
+
 ## Themes
 
 Visual Studio Dark, Visual Studio (default), High Contrast Dark/Light, GitHub Dark/Light, Dracula, Monokai, One Dark,

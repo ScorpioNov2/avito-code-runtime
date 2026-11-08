@@ -1,8 +1,8 @@
 import * as monaco from 'monaco-editor';
-import { MonacoBinding } from 'y-monaco';
 import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import { throttleWithAnimationFrame } from '../utils/frameThrottle';
+import { SharedTextBinding } from './sharedTextBinding';
 import type { EditorThemeDefinition } from './editorThemes/editorTheme';
 
 export interface EditorOptions {
@@ -45,7 +45,7 @@ export class EditorController {
   bindToSharedText(sharedText: Y.Text, awareness: Awareness): void {
     const model = this.editor.getModel();
     if (!model) throw new Error('Editor model is not ready.');
-    new MonacoBinding(sharedText, model, new Set([this.editor]), awareness);
+    new SharedTextBinding(this.editor, model, sharedText, awareness);
   }
 
   setLanguage(languageId: string): void {
