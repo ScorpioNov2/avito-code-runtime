@@ -46,6 +46,14 @@ export class CollaborationSession {
     return roomId && ROOM_ID_PATTERN.test(roomId) ? roomId : null;
   }
 
+  /** Lấy Room ID từ thứ người dùng nhập: ID trần, link phòng đầy đủ, hoặc chuỗi `room=<id>`. Không hợp lệ thì trả null. */
+  static parseRoomId(input: string): string | null {
+    const text = input.trim();
+    if (ROOM_ID_PATTERN.test(text)) return text;
+    const match = /(?:^|[#?&])room=([\w-]{4,64})(?![\w-])/.exec(text);
+    return match ? match[1] : null;
+  }
+
   static buildRoomLink(roomId: string): string {
     return `${window.location.origin}${window.location.pathname}#${ROOM_URL_PARAM}=${roomId}`;
   }

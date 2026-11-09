@@ -6,6 +6,8 @@ import { EditorController } from './app/editorController';
 import { applyChromeTheme } from './app/chromeTheme';
 import { getAllEditorThemes, getEditorTheme } from './app/editorThemes/editorThemeRegistry';
 import { QrDialog } from './app/qrDialog';
+import { JoinRoomDialog, LeaveRoomDialog } from './app/roomDialogs';
+import { saveLobbyCarryOver, takeLobbyCarryOver } from './app/lobbyCarryOver';
 import { keepRemoteCursorStylesInSync } from './app/remoteCursorStyles';
 import { RunController } from './app/runController';
 import { SettingsDialog } from './app/settingsDialog';
@@ -38,10 +40,12 @@ function getSharedLanguageId(): string {
 }
 
 function seedNewDocument(): void {
-  const defaultLanguage = getLanguage(DEFAULT_LANGUAGE_ID);
+  // Vừa rời phòng thì giữ lại code đang có; mở trang lần đầu thì dùng code mẫu.
+  const carriedOver = takeLobbyCarryOver();
+  const language = getLanguage(carriedOver && hasLanguage(carriedOver.languageId) ? carriedOver.languageId : DEFAULT_LANGUAGE_ID);
   session.document.transact(() => {
-    session.sharedSettings.set('language', defaultLanguage.id);
-    session.sharedCode.insert(0, defaultLanguage.starterCode);
+    session.sharedSettings.set('language', language.id);
+    session.sharedCode.insert(0, carriedOver?.code ?? language.starterCode);
   });
 }
 
@@ -105,10 +109,12 @@ const runController = new RunController({
 
 function refreshRoomUi(): void {
   const roomId = session.currentRoomId;
+  // Ở sảnh: Create room + Join room. Trong phòng: tên phòng + Copy link + QR + Leave.
   dom.createRoomButton.hidden = roomId !== null;
+  dom.joinRoomButton.hidden = roomId !== null;
   dom.roomInfo.hidden = roomId === null;
   if (roomId) {
-    dom.roomName.textContent = `Room ${roomId.slice(0, 6)}`;
+    dom.roomNameText.textContent = `Room ${roomId}`;
     dom.roomName.title = `Room ID: ${roomId}`;
   }
 }
@@ -132,6 +138,20 @@ dom.createRoomButton.addEventListener('click', () => {
   refreshRoomUi();
   void copyRoomLink();
 });
+// Vào phòng có sẵn: đổi hash rồi tải lại trang để vào như người mới (không trộn code ở sảnh với code của phòng).
+const joinRoomDialog = new JoinRoomDialog(dom.joinDialog, (roomId) => {
+  window.location.hash = `room=${roomId}`;
+});
+
+// Rời phòng: giữ lại code đang có, bỏ Room ID khỏi URL rồi tải lại trang để về sảnh với trạng thái sạch (hết kết nối WebRTC).
+const leaveRoomDialog = new LeaveRoomDialog(dom.leaveDialog, () => {
+  saveLobbyCarryOver({ code: editor.getCode(), languageId: getSharedLanguageId() });
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  window.location.reload();
+});
+
+dom.joinRoomButton.addEventListener('click', () => joinRoomDialog.open());
+dom.leaveRoomButton.addEventListener('click', () => leaveRoomDialog.open());
 dom.copyLinkButton.addEventListener('click', () => void copyRoomLink());
 dom.showQrButton.addEventListener('click', () => {
   const roomId = session.currentRoomId;

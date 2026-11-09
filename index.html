@@ -8,37 +8,45 @@
   <body>
     <div id="app">
       <header class="top-bar">
-        <div class="top-bar__group">
-          <div class="brand" aria-label="Avito code">
-            <span class="brand__mark">&lt;/</span><span class="brand__name">Avito</span><span class="brand__suffix">code</span>
-          </div>
-          <span class="top-bar__divider"></span>
+        <div class="brand" aria-label="Avito code">
+          <span class="brand__mark">&lt;/</span><span class="brand__name">Avito</span><span class="brand__suffix">code</span>
+        </div>
+        <span class="top-bar__divider"></span>
+
+        <div class="room-controls">
           <button id="create-room-button" class="button button--primary" type="button">
             <span aria-hidden="true">+</span>Create room
           </button>
+          <button id="join-room-button" class="button button--secondary" type="button" title="Join a room with its ID">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+            Join room
+          </button>
           <div id="room-info" class="room-info" hidden>
-            <span id="room-name" class="room-name"></span>
+            <span id="room-name" class="room-name"><span id="room-name-text" class="room-name__text"></span></span>
             <button id="copy-link-button" class="button button--secondary button--icon" type="button" title="Copy room link" aria-label="Copy room link">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
             </button>
             <button id="show-qr-button" class="button button--secondary button--icon" type="button" title="Show QR code" aria-label="Show QR code">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
             </button>
+            <button id="leave-room-button" class="button button--secondary button--icon button--leave" type="button" title="Leave room" aria-label="Leave room">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+            </button>
           </div>
         </div>
 
-        <div class="top-bar__group">
-          <button id="toggle-terminal-button" class="button button--ghost" type="button" aria-pressed="false" title="Show or hide output">
+        <div class="top-bar__actions">
+          <button id="toggle-terminal-button" class="button button--ghost" type="button" aria-pressed="false" title="Show or hide output" aria-label="Show or hide output">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>
-            Output
+            <span class="button__label">Output</span>
           </button>
           <button id="run-button" class="button button--run" type="button" title="Run code" aria-label="Run code">
             <svg class="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L7.5 3.64A1 1 0 0 0 6 4.5Z"/></svg>
             <svg class="icon-stop" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
           </button>
-          <button id="settings-button" class="button button--secondary" type="button">
+          <button id="settings-button" class="button button--secondary" type="button" title="Settings" aria-label="Settings">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
-            Settings
+            <span class="button__label">Settings</span>
           </button>
         </div>
       </header>
@@ -104,6 +112,34 @@
             Copy link
           </button>
           <button id="qr-close-button" class="button button--primary" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="join-dialog" class="dialog dialog--flush">
+      <div class="dialog__content">
+        <form id="join-form" method="dialog" novalidate>
+          <h2>Join a room</h2>
+          <p class="dialog__hint">Enter the room ID you were given, or paste the full room link.</p>
+          <label class="field">Room ID or link
+            <input id="join-room-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 57ba1a27a86c" aria-describedby="join-room-error" />
+          </label>
+          <p id="join-room-error" class="field__error" role="alert" hidden></p>
+          <div class="dialog__actions">
+            <button id="join-cancel-button" class="button button--secondary" type="button">Cancel</button>
+            <button class="button button--primary" type="submit">Join</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <dialog id="leave-dialog" class="dialog dialog--flush">
+      <div class="dialog__content">
+        <h2>Leave this room?</h2>
+        <p class="dialog__hint">You will go back to the lobby. The others stay in the room, and the code you see now stays in your editor.</p>
+        <div class="dialog__actions">
+          <button id="leave-stay-button" class="button button--secondary" type="button">Stay</button>
+          <button id="leave-confirm-button" class="button button--danger" type="button">Leave room</button>
         </div>
       </div>
     </dialog>

@@ -1,6 +1,8 @@
 import { throttleWithAnimationFrame } from '../utils/frameThrottle';
 
-const MIN_PANE_SIZE_PX = 120;
+const MIN_EDITOR_SIZE_PX = 120;
+/** Khớp với `min-width: 150px` của .terminal-pane trong styles.css. */
+const MIN_TERMINAL_SIZE_PX = 150;
 
 /**
  * Thanh kéo giữa vùng Code và Terminal.
@@ -13,7 +15,7 @@ export class SplitPane {
     const isSideBySide = getComputedStyle(this.workspace).flexDirection === 'row';
     const totalSize = isSideBySide ? bounds.width : bounds.height;
     const distanceFromEnd = isSideBySide ? bounds.right - clientX : bounds.bottom - clientY;
-    const terminalSize = Math.min(Math.max(distanceFromEnd, MIN_PANE_SIZE_PX), totalSize - MIN_PANE_SIZE_PX);
+    const terminalSize = Math.min(Math.max(distanceFromEnd, MIN_TERMINAL_SIZE_PX), totalSize - MIN_EDITOR_SIZE_PX);
 
     this.workspace.style.setProperty('--terminal-size', `${terminalSize}px`);
     this.onResized(); // gọi editor.layout() ngay trong cùng frame
