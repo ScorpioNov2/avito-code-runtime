@@ -15,14 +15,20 @@ npm run build          # type-check + production build (copies public/wasm into 
 verified with SHA-256 (`scripts/wasm-assets.manifest.json`). Python needs no download here (Pyodide is fetched
 from jsDelivr on the first Python run); JavaScript needs nothing.
 
-Click **Create room**: the link is copied and the top bar shows the room name with **Copy link** and **QR code**
-buttons. Rooms need a signaling server, see below. To test alone, open the room link in two tabs.
+**Rooms.** In the lobby, **Create room** makes a new room (the link is copied) and **Join room** opens a popup where you type a room ID
+or paste a full room link. Inside a room the top bar shows the full room name with **Copy link**, **QR code** and **Leave**
+buttons. Leaving asks for confirmation, then returns to the lobby: the code you had stays in your editor (for that one
+reload) and the others remain in the room. Joining a room starts from the room's code, not from what was in your lobby editor.
+Rooms need a signaling server, see below. To test alone, open the room link in two tabs.
+
+**Phones.** The layout adapts down to 320px: the top bar splits into two rows (logo + actions / room controls), the status bar wraps,
+icon-only buttons replace labels, inputs use 16px text (so iOS does not zoom in), and the splitter has a larger touch area.
 
 ## Language runtimes
 
 | Language | How it runs | First run | Notes |
 |----------|-------------|-----------|-------|
-| JavaScript | Web Worker | instant | `console.*` -> terminal, top-level `await` works. Like Node, the run ends only when no timer / `fetch` is pending (`setTimeout`, `setInterval`, async callbacks, `fetch(...).then(...)`); a never-cleared `setInterval` keeps running until you press Stop. Errors show your own line numbers |
+| JavaScript | Web Worker | instant | `console.*` -> terminal, top-level `await` works. Like Node, the run ends only when no timer / `fetch` is pending (`setTimeout`, `setInterval`, async callbacks, `fetch(...).then(...)`); a never-cleared `setInterval` keeps running until you press Stop. Errors show the worker's raw stack trace (its line numbers are offset by 2 from the editor's) |
 | Python | Pyodide in a Web Worker | ~5 s | `input()` not supported |
 | C/C++ | clang + wasm-ld (LLVM 8) compiled to wasm, in a Web Worker | downloads ~60 MB (cached) | C++17, libc++, no exceptions, no threads, no `sleep`/`usleep`, stdin is empty. Source is always compiled as C++ |
 | Rust | **Miri interpreter** compiled to wasm, in a Web Worker | downloads ~150 MB (cached) | Interprets code (does not compile to machine code), so it is slow. Single file, std only, no stdin. A panic prints an extra "unsupported Miri functionality" message (no unwinding) |

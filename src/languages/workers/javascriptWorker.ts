@@ -2,32 +2,10 @@ import type { WorkerMessage, WorkerRequest } from '../workerProtocol';
 
 const post = (message: WorkerMessage): void => self.postMessage(message);
 
-/** Số dòng đầu của hàm bọc (`async function anonymous(\n) {\n`) nằm trước code người dùng. */
-const WRAPPER_LINE_COUNT = 2;
-
-/**
- * Làm stack trace dễ đọc: frame thuộc code người dùng đổi thành "line X, col Y" (theo đúng số dòng họ thấy
- * trong editor), frame nội bộ của worker bị bỏ. Trình duyệt khác Chrome có định dạng khác nên giữ nguyên dòng lạ.
- */
-function cleanStack(stack: string): string {
-  const userFrame = /^\s*at (?:(\S+) )?\(?eval at .*<anonymous>:(\d+):(\d+)\)?$/;
-  return stack
-    .split('\n')
-    .flatMap((line) => {
-      const match = userFrame.exec(line);
-      if (match) {
-        const [, functionName, lineNumber, column] = match;
-        const position = `line ${Number(lineNumber) - WRAPPER_LINE_COUNT}, col ${column}`;
-        return [functionName && functionName !== 'eval' ? `    at ${functionName} (${position})` : `    at ${position}`];
-      }
-      return /javascriptWorker|worker_file/.test(line) ? [] : [line];
-    })
-    .join('\n');
-}
-
 function formatValue(value: unknown): string {
   if (typeof value === 'string') return value;
-  if (value instanceof Error) return cleanStack(value.stack ?? value.message);
+  // Giữ nguyên stack trace gốc của worker (không lọc/đổi số dòng).
+  if (value instanceof Error) return value.stack ?? value.message;
   try {
     if (typeof value !== 'object' || value === null) return String(value);
     // Gọn trên một dòng nếu đủ ngắn (giống console của Node), dài thì mới xuống dòng.
