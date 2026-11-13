@@ -1,6 +1,10 @@
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { Awareness } from 'y-protocols/awareness';
+import { loadIceConfig } from './iceConfig';
+
+/** offline: không nối được signaling server. waiting: chưa có ai khác kết nối. connected: đang nối trực tiếp với ít nhất một người. */
+export type ConnectionState = 'offline' | 'waiting' | 'connected';
 
 export interface RoomMember {
   clientId: number;
@@ -33,6 +37,8 @@ export class CollaborationSession {
   private provider: WebrtcProvider | null = null;
   private roomId: string | null = null;
   private lastMembersKey = '';
+  private connectionState: ConnectionState = 'waiting';
+  private readonly connectionListeners = new Set<(state: ConnectionState) => void>();
 
   constructor(displayName: string) {
     this.awareness.setLocalStateField('user', {
@@ -62,20 +68,32 @@ export class CollaborationSession {
     return this.roomId;
   }
 
-  joinRoom(roomId: string): void {
-    if (this.provider) return;
+  /**
+   * Gắn y-webrtc vào tài liệu để vào phòng. Phải lấy cấu hình ICE (TURN) TRƯỚC khi tạo provider vì provider bắt đầu
+   * tìm người khác ngay; nếu lấy TURN lỗi hoặc quá 4 giây thì dùng STUN thôi.
+   */
+  async joinRoom(roomId: string): Promise<void> {
+    if (this.roomId) return;
     this.roomId = roomId;
+    const iceConfig = await loadIceConfig({
+      signalingUrls: customSignalingUrls,
+      staticIceServersJson: import.meta.env.VITE_ICE_SERVERS as string | undefined,
+      turnCredentialsUrl: import.meta.env.VITE_TURN_CREDENTIALS_URL as string | undefined,
+      transportPolicy: import.meta.env.VITE_ICE_TRANSPORT_POLICY as string | undefined,
+    });
     this.provider = new WebrtcProvider(`avito-code:${roomId}`, this.document, {
       awareness: this.awareness,
+      peerOpts: { config: iceConfig },
       ...(customSignalingUrls.length > 0 ? { signaling: customSignalingUrls } : {}),
     });
+    this.startConnectionMonitoring(this.provider);
   }
 
   /** Tạo phòng mới (giữ nguyên code đang viết) và ghi Room ID lên URL để chia sẻ. */
   createRoom(): string {
     const randomBytes = crypto.getRandomValues(new Uint8Array(6));
     const roomId = Array.from(randomBytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-    this.joinRoom(roomId);
+    void this.joinRoom(roomId);
     window.history.replaceState(null, '', CollaborationSession.buildRoomLink(roomId));
     return roomId;
   }
@@ -93,6 +111,36 @@ export class CollaborationSession {
       members.push({ clientId, name: user.name, color: user.color ?? MEMBER_COLORS[0], isMe: clientId === this.awareness.clientID });
     });
     return members.sort((a, b) => Number(b.isMe) - Number(a.isMe) || a.clientId - b.clientId);
+  }
+
+  onConnectionChanged(listener: (state: ConnectionState) => void): void {
+    this.connectionListeners.add(listener);
+    listener(this.connectionState);
+  }
+
+  private computeConnectionState(): ConnectionState {
+    const provider = this.provider;
+    if (!provider) return 'waiting'; // đang lấy cấu hình TURN
+    if (!provider.signalingConns.some((connection) => connection.connected)) return 'offline';
+    const room = provider.room;
+    const connectedPeers = room ? [...room.webrtcConns.values()].filter((connection) => connection.connected).length + room.bcConns.size : 0;
+    return connectedPeers > 0 ? 'connected' : 'waiting';
+  }
+
+  private startConnectionMonitoring(provider: WebrtcProvider): void {
+    provider.on('peers', () => this.refreshConnectionState());
+    // y-webrtc tự reconnect signaling bằng exponential backoff. Chỉ đọc trạng thái ở đây;
+    // không disconnect/connect provider khi mất peer, vì việc đó tạo socket mới và phá phiên của cả phòng.
+    window.setInterval(() => this.refreshConnectionState(), 1000);
+    this.refreshConnectionState();
+  }
+
+  private refreshConnectionState(): void {
+    const state = this.computeConnectionState();
+    if (state !== this.connectionState) {
+      this.connectionState = state;
+      this.connectionListeners.forEach((listener) => listener(state));
+    }
   }
 
   /** Gọi listener khi danh sách thành viên (tên/màu/người vào-ra) thay đổi; bỏ qua cập nhật con trỏ. */
