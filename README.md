@@ -174,10 +174,39 @@ you are reading (the colored cursor bar and selection stay). It is saved in your
 Add one: create `src/app/editorThemes/themes/<name>Theme.ts` with `export default createPaletteTheme(meta, palette)`
 (copy an existing file); it is picked up automatically.
 
+## SEO and Google Search Console
+
+All SEO text lives in `seo.config.ts` (title, description, Open Graph text, feature list). `scripts/seoPlugin.ts` injects it into `index.html`
+at build time: description, robots, Open Graph, Twitter Card, canonical, JSON-LD (`WebApplication` + `WebSite`), and it writes `sitemap.xml` and
+`robots.txt` into `dist/`. The share image is `public/assets/og-image.png` (1200x630); its source is `scripts/og-image/og.html`.
+
+**Site address.** Absolute URLs are required for the canonical link, `og:image` and the sitemap. `siteUrl` in `seo.config.ts` is set to
+`https://scorpionov2.github.io/avito-code-runtime/`. If you empty it, the address is derived from `GITHUB_REPOSITORY` and `--base` when the build
+runs in GitHub Actions. With a custom domain, change `siteUrl` or set the `VITE_SITE_URL` variable (for example `https://code.example.com/`);
+the variable takes priority. If the address cannot be determined the build prints a `[seo]` warning and skips those tags.
+
+**Rooms are not indexed separately.** A room link looks like `/#room=<id>`; search engines ignore everything after `#`, so there is exactly one
+indexable URL (the site root). That is also why room IDs never show up in search results.
+
+**Google Search Console, once per site:**
+
+1. https://search.google.com/search-console > **Add property** > **URL prefix**, and paste the exact site address (`https://scorpionov2.github.io/avito-code-runtime/`, trailing slash included).
+2. Verify ownership with the **HTML tag** method: copy the `content` value, put it in `googleVerification` in `seo.config.ts` (or the
+   `VITE_GSC_VERIFICATION` variable), deploy, then press **Verify**. Alternative: download the `google*.html` file and put it in `public/`.
+3. **Sitemaps** > enter `sitemap.xml` > **Submit**.
+4. **URL Inspection** > paste the site address > **Request indexing**.
+5. Check the share preview with the Facebook Sharing Debugger (**Scrape Again** after changing the image; social networks cache it).
+
+Note: crawlers only read `robots.txt` at the root of a host. On `https://scorpionov2.github.io/avito-code-runtime/` it is not at the root, so it is ignored
+(harmless, everything is allowed by default); on a custom domain it works as written.
+
 ## Project layout
 
 ```
 scripts/fetch-wasm-assets.mjs      downloads + verifies toolchains
+scripts/seoPlugin.ts               Vite plugin: SEO meta, JSON-LD, sitemap.xml, robots.txt
+scripts/og-image/og.html           source of the Open Graph image
+seo.config.ts                      SEO text and settings (single source of truth)
 signaling/                         Cloudflare Worker signaling server (separate package)
 supabase/functions/signaling/      Supabase Edge Function + Realtime Broadcast relay
 .github/workflows/deploy.yml       GitHub Pages deployment

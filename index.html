@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="./assets/favicon.png" />
-    <title>Avito code</title>
+    <title>Avito code runtime – Collaborative online code editor</title>
   </head>
   <body>
     <div id="app">
+      <h1 class="sr-only">Avito code runtime: real-time collaborative online code editor for JavaScript, Python, C/C++, Rust and Java</h1>
       <header class="top-bar">
         <div class="brand" aria-label="Avito code">
           <span class="brand__mark">&lt;/</span><span class="brand__name">Avito</span><span class="brand__suffix">code</span>
@@ -191,6 +192,12 @@
     </dialog>
 
     <div id="toast-container" class="toast-container" aria-live="polite"></div>
+    <noscript>
+      <p style="max-width:40rem;margin:0;padding:24px;font:16px/1.6 system-ui,sans-serif">
+        Avito code runtime is a real-time collaborative online code editor. Write and run JavaScript, Python, C/C++, Rust and Java together with
+        friends or classmates, with no install and no account. It needs JavaScript to run, so please enable it in your browser.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
